@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model Household {
+  id      Int      @id @default(autoincrement())
+  name    String   @db.VarChar(255)
+  users   User[]
+  recipes Recipe[]
+  meals   Meal[]
+  isDeleted Boolean @default(false)
+}
+
+model User {
+  id          Int       @id @default(autoincrement())
+  name        String    @db.VarChar(255)
+  email       String    @unique
+  password    String
+  household   Household @relation(fields: [householdId], references: [id])
+  householdId Int
+  Meal        Meal[]
+  tokens      Token[]
+  isDeleted Boolean @default(false)
+}
+
+model Token {
+  id         Int       @id @default(autoincrement())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  type       TokenType
+  emailToken String?   @unique // Only used for short lived email tokens
+  valid      Boolean   @default(true)
+  expiration DateTime
+
+  // Relation fields
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+}
+
+model Recipe {
+  id          Int          @id @default(autoincrement())
+  name        String       @db.VarChar(255)
+  duration    Int
+  description String
+  meal        Meal         @relation(fields: [mealId], references: [id])
+  ingredients Ingredient[]
+  Household   Household?   @relation(fields: [householdId], references: [id])
+  householdId Int?
+  mealId      Int
+  isDeleted Boolean @default(false)
+}
+
+model Meal {
+  id          Int        @id @default(autoincrement())
+  name        String     @db.VarChar(255)
+  user        User       @relation(fields: [creator], references: [id])
+  creator     Int
+  Household   Household? @relation(fields: [householdId], references: [id])
+  householdId Int?
+  Recipe      Recipe[]
+  isDeleted Boolean @default(false)
+}
+
+model Ingredient {
+  id       Int     @id @default(autoincrement())
+  name     String  @db.VarChar(255)
+  unit     String
+  Recipe   Recipe? @relation(fields: [recipeId], references: [id])
+  recipeId Int?
+  isDeleted Boolean @default(false)
+}
+
+enum TokenType {
+  ACCESS // used as a short lived token sent to the user - strored in memory
+  REFRESH
+}

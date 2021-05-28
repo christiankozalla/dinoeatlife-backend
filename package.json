@@ -1,0 +1,61 @@
+{
+  "name": "puroviva-hapi",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build": "prisma generate && tsc",
+    "start": "node dist/index.js",
+    "compile": "tsc",
+    "dev": "ts-node-dev --respawn ./src/index.ts",
+    "format": "npx prettier --write \"src/**/*.ts\"",
+    "seed": "prisma db seed --preview-feature",
+    "seed-users": "ts-node ./src/seed-users.ts",
+    "test": "jest",
+    "test:watch": "jest --watch --watch --no-cache --config jest.config.js",
+    "postgres:start": "docker compose up -d",
+    "db:push": "prisma db push",
+    "migrate:reset": "prisma migrate reset",
+    "migrate:create": "prisma migrate dev --create-only",
+    "migrate:dev": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "prisma:generate": "prisma generate"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "engines": {
+    "node": "14.x"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.2",
+    "@types/hapi-pino": "^8.0.1",
+    "@types/hapi__basic": "^5.1.2",
+    "@types/hapi__hapi": "^20.0.8",
+    "@types/jest": "^26.0.23",
+    "@types/jsonwebtoken": "^8.5.1",
+    "jest": "^27.0.0",
+    "prettier": "^2.3.0",
+    "prisma": "^2.23.0",
+    "ts-jest": "^26.5.6",
+    "ts-node": "^10.0.0",
+    "ts-node-dev": "^1.1.6",
+    "typescript": "^4.2.4"
+  },
+  "dependencies": {
+    "@hapi/basic": "^6.0.0",
+    "@hapi/boom": "^9.1.2",
+    "@hapi/hapi": "^20.1.3",
+    "@prisma/client": "^2.23.0",
+    "bcryptjs": "^2.4.3",
+    "date-fns": "^2.21.3",
+    "dotenv": "^10.0.0",
+    "hapi-auth-jwt2": "^10.2.0",
+    "hapi-pino": "^8.3.0",
+    "joi": "^17.4.0",
+    "jsonwebtoken": "^8.5.1"
+  },
+  "prettier": {
+    "printWidth": 100,
+    "trailingComma": "none"
+  }
+}
