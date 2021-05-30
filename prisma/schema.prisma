@@ -7,41 +7,51 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model Household {
-  id      Int      @id @default(autoincrement())
-  name    String   @db.VarChar(255)
-  users   User[]
-  recipes Recipe[]
-  meals   Meal[]
-  isDeleted Boolean @default(false)
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(255)
+  users     User[]
+  recipes   Recipe[]
+  meals     Meal[]
+  isDeleted Boolean  @default(false)
 }
 
 model User {
   id          Int       @id @default(autoincrement())
-  name        String    @db.VarChar(255)
   email       String    @unique
   password    String
   household   Household @relation(fields: [householdId], references: [id])
   householdId Int
+  Profile     Profile?
+  // tokens      Token[]
+  isDeleted   Boolean   @default(false)
   Meal        Meal[]
-  tokens      Token[]
-  isDeleted Boolean @default(false)
 }
 
-model Token {
-  id         Int       @id @default(autoincrement())
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  type       TokenType
-  emailToken String?   @unique // Only used for short lived email tokens
-  valid      Boolean   @default(true)
-  expiration DateTime
-
-  // Relation fields
+// A user can have one profile
+// The Profile holds *public* information
+model Profile {
   user   User @relation(fields: [userId], references: [id])
-  userId Int
+  userId Int  @unique
+  name        String?    @db.VarChar(255)
+  bio         String?    @db.VarChar(2000)
+  city        String?    @db.VarChar(30)
+  social      Json?
 }
+
+// model Token {
+//   id         Int       @id @default(autoincrement())
+//   createdAt  DateTime  @default(now())
+//   updatedAt  DateTime  @updatedAt
+//   type       TokenType
+//   emailToken String?   @unique // Only used for short lived email tokens
+//   valid      Boolean   @default(true)
+//   expiration DateTime
+
+//   // Relation fields
+//   user   User @relation(fields: [userId], references: [id])
+//   userId Int
+// }
 
 model Recipe {
   id          Int          @id @default(autoincrement())
@@ -51,9 +61,9 @@ model Recipe {
   meal        Meal         @relation(fields: [mealId], references: [id])
   ingredients Ingredient[]
   Household   Household?   @relation(fields: [householdId], references: [id])
-  householdId Int?
+  householdId Int
   mealId      Int
-  isDeleted Boolean @default(false)
+  isDeleted   Boolean      @default(false)
 }
 
 model Meal {
@@ -64,15 +74,15 @@ model Meal {
   Household   Household? @relation(fields: [householdId], references: [id])
   householdId Int?
   Recipe      Recipe[]
-  isDeleted Boolean @default(false)
+  isDeleted   Boolean    @default(false)
 }
 
 model Ingredient {
-  id       Int     @id @default(autoincrement())
-  name     String  @db.VarChar(255)
-  unit     String
-  Recipe   Recipe? @relation(fields: [recipeId], references: [id])
-  recipeId Int?
+  id        Int     @id @default(autoincrement())
+  name      String  @db.VarChar(255)
+  unit      String
+  Recipe    Recipe? @relation(fields: [recipeId], references: [id])
+  recipeId  Int?
   isDeleted Boolean @default(false)
 }
 
