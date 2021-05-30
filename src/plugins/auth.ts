@@ -53,24 +53,22 @@ export const authPlugin: Hapi.Plugin<null> = {
           auth: false,
           validate: {
             payload: Joi.object({
-              name: Joi.string().alphanum().min(3).max(30).required(),
               email: Joi.string().email().required(),
-              password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{3,30}$")).required()
+              password: Joi.string().required()
             })
           }
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
-          const { name, email, password } = request.payload as User;
+          const { email, password } = request.payload as User;
 
-          if (!name || !email || !password) {
+          if (!email || !password) {
             return Boom.badRequest("Credentials missing");
           }
 
           try {
             const newUser = await prisma.user.create({
               data: {
-                name,
                 email,
                 password: await hash(password, 10),
                 household: {
@@ -88,11 +86,9 @@ export const authPlugin: Hapi.Plugin<null> = {
               return Boom.badData("Email already exists");
             }
 
-            const accessToken = createAccessToken(newUser.id);
-
             const credentials = {
               userId: newUser.id,
-              accessToken
+              accessToken: createAccessToken(newUser.id)
             };
 
             return h.response(credentials).code(201);

@@ -10,7 +10,7 @@ declare module "@hapi/hapi" {
 }
 
 //plugin to instatiate Prisma Client
-const prismaPlugin: Hapi.Plugin<null> = {
+export const prismaPlugin: Hapi.Plugin<null> = {
   name: "prisma",
   register: async function (server: Hapi.Server) {
     const prisma = new PrismaClient({
@@ -29,5 +29,3 @@ const prismaPlugin: Hapi.Plugin<null> = {
     });
   }
 };
-
-export default prismaPlugin;

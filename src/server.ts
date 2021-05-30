@@ -5,8 +5,9 @@ import hapiAuthBasic from "@hapi/basic";
 import hapiAuthJWT from "hapi-auth-jwt2";
 
 // Custom Plugins
-import prismaPlugin from "./plugins/prisma";
+import { prismaPlugin } from "./plugins/prisma";
 import { authPlugin } from "./plugins/auth";
+import { usersPlugin } from "./plugins/users";
 
 // Config
 import dotenv from "dotenv";
@@ -36,14 +37,17 @@ export async function createServer(): Promise<Hapi.Server> {
   });
 
   // Register Hapi plugins -- like middleware
-  await server.register([hapiAuthBasic, hapiAuthJWT, prismaPlugin, authPlugin]);
+  await server.register([hapiAuthBasic, hapiAuthJWT, prismaPlugin, authPlugin, usersPlugin]);
 
   server.route([
     {
       method: "GET",
       path: "/",
+      options: {
+        auth: false
+      },
       handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
-        return "Hello from Hapi";
+        return h.response({ message: "Hello from Hapi Backend"}).code(200);
       }
     },
     {
