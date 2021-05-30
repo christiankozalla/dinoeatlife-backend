@@ -11,7 +11,7 @@
     "seed": "prisma db seed --preview-feature",
     "seed-users": "ts-node ./src/seed-users.ts",
     "test": "jest",
-    "test:watch": "jest --watch --watch --no-cache --config jest.config.js",
+    "test:watch": "jest --watch",
     "postgres:start": "docker compose up -d",
     "db:push": "prisma db push",
     "migrate:reset": "prisma migrate reset",
@@ -36,7 +36,7 @@
     "jest": "^27.0.0",
     "prettier": "^2.3.0",
     "prisma": "^2.23.0",
-    "ts-jest": "^26.5.6",
+    "ts-jest": "^27.0.1",
     "ts-node": "^10.0.0",
     "ts-node-dev": "^1.1.6",
     "typescript": "^4.2.4"

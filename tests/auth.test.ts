@@ -20,7 +20,7 @@ describe("POST /register - register a user", () => {
       url: "/register",
       payload: {
         name: "My Test Name",
-        email: `${new Date()}test@malle`,
+        email: "testan@malle.de",
         password: "1234abc"
       }
     });
