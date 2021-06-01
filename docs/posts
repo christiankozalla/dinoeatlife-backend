@@ -1,0 +1,17 @@
+# Posts - Endpoint
+
+## Public
+
+- GET /posts - returns all recent posts; LIMIT: 20 (?)
+- GET /posts/{userId} - returns all recent posts by a user; LIMIT: 10
+
+## Private
+
+With Authentication - only the User themself is authorized!
+
+Token payload in "authorization" header must include the users id. Must match {userId} e.g. token.payload.userId === request.params.userId
+
+- POST /posts/{userId} - create a new post by a user
+- PUT /posts/{userId}/{postId} - updates an existing post
+- DELETE /posts/{userId}/{postId} - deletes an existing post (soft delete: sets isDeleted to true)
+
