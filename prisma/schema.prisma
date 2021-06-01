@@ -12,7 +12,8 @@ model Household {
   name      String   @db.VarChar(255)
   users     User[]
   recipes   Recipe[]
-  meals     Meal[]
+  ingredients Ingredient[]
+  //meals     Meal[]
   isDeleted Boolean  @default(false)
 }
 
@@ -23,9 +24,10 @@ model User {
   household   Household @relation(fields: [householdId], references: [id])
   householdId Int
   Profile     Profile?
+  recipes     Recipe[]
   // tokens      Token[]
   isDeleted   Boolean   @default(false)
-  Meal        Meal[]
+  //Meal        Meal[]
 }
 
 // A user can have one profile
@@ -58,31 +60,33 @@ model Recipe {
   name        String       @db.VarChar(255)
   duration    Int
   description String
-  meal        Meal         @relation(fields: [mealId], references: [id])
   ingredients Ingredient[]
-  Household   Household?   @relation(fields: [householdId], references: [id])
+  user        User        @relation(fields: [creator], references: [id])
+  creator     Int
+  household   Household   @relation(fields: [householdId], references: [id])
   householdId Int
-  mealId      Int
   isDeleted   Boolean      @default(false)
 }
 
-model Meal {
-  id          Int        @id @default(autoincrement())
-  name        String     @db.VarChar(255)
-  user        User       @relation(fields: [creator], references: [id])
-  creator     Int
-  Household   Household? @relation(fields: [householdId], references: [id])
-  householdId Int?
-  Recipe      Recipe[]
-  isDeleted   Boolean    @default(false)
-}
+// A meal is basically an Instance of a recipe - with time and date
+// model Meal {
+//   id          Int        @id @default(autoincrement())
+//   name        String     @db.VarChar(255)
+//   user        User       @relation(fields: [creator], references: [id])
+//   creator     Int
+//   date        DateTime
+//   household   Household? @relation(fields: [householdId], references: [id])
+//   householdId Int?
+//   isDeleted   Boolean    @default(false)
+// }
 
 model Ingredient {
   id        Int     @id @default(autoincrement())
   name      String  @db.VarChar(255)
   unit      String
-  Recipe    Recipe? @relation(fields: [recipeId], references: [id])
-  recipeId  Int?
+  recipes   Recipe[]
+  household   Household @relation(fields: [householdId], references: [id])
+  householdId Int
   isDeleted Boolean @default(false)
 }
 

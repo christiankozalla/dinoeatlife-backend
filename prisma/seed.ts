@@ -5,89 +5,124 @@ const prisma = new PrismaClient();
 
 // const seedData = [
 //   {
-//     name: "Christian",
 //     email: "christian@christian.de",
 //     password: "christiansNicePassword",
 //     household: {
-//       create: { name: "Koala-Bude" },
-//     },
+//       create: { name: "Koala-Bude" }
+//     }
 //   },
 //   {
-//     name: "Bingo",
 //     email: "bingo@lino.de",
 //     password: "bingosNicePassword",
 //     household: {
-//       create: { name: "BingoBingo" },
-//     },
+//       create: { name: "BingoBingo" }
+//     }
 //   },
 //   {
-//     name: "Lalala",
 //     email: "lalala@lo.de",
 //     password: "lalalasNicePassword",
 //     household: {
-//       create: { name: "Alalalalalong" },
-//     },
-//   },
+//       create: { name: "Alalalalalong" }
+//     }
+//   }
 // ];
 
-// Add second user to household
+// //Add second user to household
 // const secondUser = {
-//   name: "Stephanie",
 //   email: "stephie@stephie.de",
-//   password: "stephiesNicePassword",
+//   password: "stephiesNicePassword"
 // };
 
-const userProfiles = [
-  {
-    userId: 1,
-    name: "Christian",
-    city: "Dresden",
-    bio: "My live is a blast.....",
-    social: {
-      twitter: "@CKozalla",
-      github: "christiankozalla",
-      website: "chrisko.io"
-    }
-  },
-  {
-    userId: 2,
-    name: "Dirk",
-    city: "Dortmund",
-    bio: "Haaaaaleeelujaaaah",
-    social: {
-      twitter: "@dirkydirk",
-      github: "rollo"
-    }
-  },
-  {
-    userId: 4,
-    name: "Stephanie",
-    city: "Dresden",
-    bio: "Yipppie",
-    social: {
-      twitter: "@stephieswerk",
-      website: "www.stephieswerk.de"
-    }
-  }
-];
+// const userProfiles = [
+//   {
+//     name: "Christian",
+//     city: "Dresden",
+//     bio: "My live is a blast.....",
+//     social: {
+//       twitter: "@CKozalla",
+//       github: "christiankozalla",
+//       website: "chrisko.io"
+//     }
+//   },
+//   {
+//     name: "Dirk",
+//     city: "Dortmund",
+//     bio: "Haaaaaleeelujaaaah",
+//     social: {
+//       twitter: "@dirkydirk",
+//       github: "rollo"
+//     }
+//   },
+//   {
+//     name: "Stephanie",
+//     city: "Dresden",
+//     bio: "Yipppie",
+//     social: {
+//       twitter: "@stephieswerk",
+//       website: "www.stephieswerk.de"
+//     }
+//   }
+// ];
+
+// async function main() {
+//   console.log(`Start seeding ...`);
+//   for (let i = 0; i < seedData.length; i++) {
+//     seedData[i].password = await bcrypt.hash(seedData[i].password, 10);
+//     const user = await prisma.user.create({
+//       data: seedData[i]
+//     });
+
+//     await prisma.profile.create({
+//       data: {
+//         ...userProfiles[i],
+//         user: {
+//           connect: { email: seedData[i].email }
+//         }
+//       }
+//     });
+//     console.log(`Created user with id: ${user.id}`);
+//   }
+
+//   secondUser.password = await bcrypt.hash(secondUser.password, 10);
+
+//   await prisma.user.create({
+//     data: {
+//       ...secondUser,
+//       householdId: 1,
+//     },
+//   });
+//   console.log(`Seeding finished.`);
+// }
 
 async function main() {
   console.log(`Start seeding ...`);
-  for (let u of userProfiles) {
-    // u.password = await bcrypt.hash(u.password, 10);
-    const user = await prisma.profile.create({
-      data: u
-    });
-    console.log(`Created user with id: ${user.id}`);
-  }
-  // secondUser.password = await bcrypt.hash(secondUser.password, 10);
 
-  // await prisma.user.create({
-  //   data: {
-  //     ...secondUser,
-  //     householdId: 1,
-  //   },
-  // });
+  const user = await prisma.user.findUnique({
+    where: {
+      email: "christian@christian.de"
+    }
+  });
+
+  console.log(user);
+
+  await prisma.recipe.create({
+    data: {
+      name: "New Recipe",
+      duration: 1000,
+      description: "A new recipe created by christian",
+      user: {
+        connect: {
+          id: user.id
+        }
+      },
+      household: {
+        connect: {
+          id: user.householdId
+        }
+      }
+    }
+  });
+
   console.log(`Seeding finished.`);
 }
 
