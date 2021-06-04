@@ -7,27 +7,27 @@ const prisma = new PrismaClient();
 //   {
 //     email: "christian@christian.de",
 //     password: "christiansNicePassword",
-//     household: {
+//     home: {
 //       create: { name: "Koala-Bude" }
 //     }
 //   },
 //   {
 //     email: "bingo@lino.de",
 //     password: "bingosNicePassword",
-//     household: {
+//     home: {
 //       create: { name: "BingoBingo" }
 //     }
 //   },
 //   {
 //     email: "lalala@lo.de",
 //     password: "lalalasNicePassword",
-//     household: {
+//     home: {
 //       create: { name: "Alalalalalong" }
 //     }
 //   }
 // ];
 
-// //Add second user to household
+// //Add second user to home
 // const secondUser = {
 //   email: "stephie@stephie.de",
 //   password: "stephiesNicePassword"
@@ -88,7 +88,7 @@ const prisma = new PrismaClient();
 //   await prisma.user.create({
 //     data: {
 //       ...secondUser,
-//       householdId: 1,
+//       homeId: 1,
 //     },
 //   });
 //   console.log(`Seeding finished.`);
@@ -115,9 +115,9 @@ async function main() {
           id: user.id
         }
       },
-      household: {
+      home: {
         connect: {
-          id: user.householdId
+          id: user.homeId
         }
       }
     }

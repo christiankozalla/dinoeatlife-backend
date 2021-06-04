@@ -7,38 +7,39 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Household {
-  id        Int      @id @default(autoincrement())
-  name      String   @db.VarChar(255)
-  users     User[]
-  recipes   Recipe[]
+model Home {
+  id          Int          @id @default(autoincrement())
+  name        String       @db.VarChar(255)
+  users       User[]
+  recipes     Recipe[]
   ingredients Ingredient[]
   //meals     Meal[]
-  isDeleted Boolean  @default(false)
+  isDeleted   Boolean      @default(false)
 }
 
 model User {
-  id          Int       @id @default(autoincrement())
-  email       String    @unique
-  password    String
-  household   Household @relation(fields: [householdId], references: [id])
-  householdId Int
-  Profile     Profile?
-  recipes     Recipe[]
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  home      Home     @relation(fields: [homeId], references: [id])
+  homeId    Int
+  profile   Profile?
+  recipes   Recipe[]
+  posts     Post[]
   // tokens      Token[]
-  isDeleted   Boolean   @default(false)
+  isDeleted Boolean  @default(false)
   //Meal        Meal[]
 }
 
 // A user can have one profile
 // The Profile holds *public* information
 model Profile {
-  user   User @relation(fields: [userId], references: [id])
-  userId Int  @unique
-  name        String?    @db.VarChar(255)
-  bio         String?    @db.VarChar(2000)
-  city        String?    @db.VarChar(30)
-  social      Json?
+  user   User    @relation(fields: [userId], references: [id])
+  userId Int     @unique
+  name   String? @db.VarChar(255)
+  bio    String? @db.VarChar(2000)
+  city   String? @db.VarChar(30)
+  social Json?
 }
 
 // model Token {
@@ -61,11 +62,19 @@ model Recipe {
   duration    Int
   description String
   ingredients Ingredient[]
-  user        User        @relation(fields: [creator], references: [id])
+  user        User         @relation(fields: [creator], references: [id])
   creator     Int
-  household   Household   @relation(fields: [householdId], references: [id])
-  householdId Int
+  home        Home         @relation(fields: [homeId], references: [id])
+  homeId      Int
   isDeleted   Boolean      @default(false)
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  content   String   @db.VarChar(255)
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
 }
 
 // A meal is basically an Instance of a recipe - with time and date
@@ -75,19 +84,19 @@ model Recipe {
 //   user        User       @relation(fields: [creator], references: [id])
 //   creator     Int
 //   date        DateTime
-//   household   Household? @relation(fields: [householdId], references: [id])
-//   householdId Int?
+//   home   Home? @relation(fields: [homeId], references: [id])
+//   homeId Int?
 //   isDeleted   Boolean    @default(false)
 // }
 
 model Ingredient {
-  id        Int     @id @default(autoincrement())
-  name      String  @db.VarChar(255)
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(255)
   unit      String
   recipes   Recipe[]
-  household   Household @relation(fields: [householdId], references: [id])
-  householdId Int
-  isDeleted Boolean @default(false)
+  home      Home     @relation(fields: [homeId], references: [id])
+  homeId    Int
+  isDeleted Boolean  @default(false)
 }
 
 enum TokenType {
