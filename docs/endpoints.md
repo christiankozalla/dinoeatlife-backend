@@ -44,16 +44,21 @@ A valid REFRESH_TOKEN can only be used to create a fresh ACCESS_TOKEN. Not to ac
 
 - POST /login - takes the users stored credentials (email, password) and returns an ACCESS_TOKEN (in-memory) and a REFRESH_TOKEN (httpOnly cookie) if credentials are valid
 
+- GET /logout - logs the user out - i. e. invalidates current/all ACCESS_TOKENS and REFRESH_TOKENS
+
+- GET /delete - Deletes a users account, removes from home
+
 - GET /refresh - expects a valid REFRESH_TOKEN as a cookie. Creates a new ACCESS_TOKEN
 
 ### Posts
 
 - GET /posts - returns all recent posts; LIMIT: 20 (?)
-- GET /posts/{userId} - returns all recent posts by a user; LIMIT: 10
+- GET /posts?user={userId} - returns all recent posts by a user; LIMIT: 10
+- GET /posts?home={homeId} - returns all recent post of a home; LIMIT: 10
 
-### Users
+### Profile
 
-- GET /users/{userId} - returns the users public profile; e.g. name, bio, posts
+See profile.md for more info
 
 ## Protected Endpoints by Auth
 
@@ -61,20 +66,11 @@ A valid REFRESH_TOKEN can only be used to create a fresh ACCESS_TOKEN. Not to ac
 
 ### Posts
 
-- POST /posts - creates a post by an authenticated user
-- PUT /posts/{postId} - updates a post - only the user, who created the posts is authorized
-- DELETE /posts/{postId} - deletes a post - only the user, who created the posts is authorized
+See posts.md for more info
 
-### Users
+### Home
 
-- POST /users - creates a user (i.e. register)
-- PUT /users/{userId} - updates part of the users information - e.g. add or update (optional) profile, change name or password
-- DELETE /users/{userId} - deletes a users account, removes them from the associated household
-
-### Household
-
-- POST /home - creates a new home - if a new user has not been invited, a new home will be created for him on register. A user has exactly one home, on the other hand a home can have many users (> 1).
-- GET /home/{homeId}?recipe=listAll||recipeId&meal=listAll||mealId&ingredients=listAll - returns all kinds of resources of a household - user must be authenticated AND member of the home - query params recipe, meal, ingredients
+See home.md for more info
 
 ### Developer's Notes
 
@@ -114,3 +110,16 @@ server.app.prisma = prisma;
 
 const { prisma } = request.server.app;
 ```
+
+## Security
+
+- Research about DOM-based XSS
+- Validate all User Input Data -> validate and encode before writing into DB - reject if not whitelisted
+- Check Origin Headers on every authenticated request
+
+Example:
+
+Frontend hosted on puroviva.de
+API hosted on api.puroviva.de
+
+Headers: Allow-Origin ... -> https://puroviva.de

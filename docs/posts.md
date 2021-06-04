@@ -11,7 +11,6 @@ With Authentication - only the User themself is authorized!
 
 Token payload in "authorization" header must include the users id. Must match {userId} e.g. token.payload.userId === request.params.userId
 
-- POST /posts/{userId} - create a new post by a user
-- PUT /posts/{userId}/{postId} - updates an existing post
-- DELETE /posts/{userId}/{postId} - deletes an existing post (soft delete: sets isDeleted to true)
-
+- POST /posts - creates a post by an authenticated user
+- PUT /posts/{postId} - updates a post - only the user, who created the posts is authorized
+- DELETE /posts/{postId} - deletes a post - only the user, who created the posts is authorized - (soft delete: sets isDeleted to true)

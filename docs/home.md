@@ -16,8 +16,11 @@ A user can perform CRUD on all his recipes, meals and posts
 - PUT /home/{homeId}/recipes/{recipeId} - updates an existing recipe, userId in ACCESS_TOKEN must match creator
 - DELETE /home/{homeId}/recipes/{ingredientId} - deletes an existing recipe, userId in ACCESS_TOKEN must match creator
 
+- GET /home/{homeId}/posts - returns all posts from all users of the household
 
 Authentication and Authorization:
 
 1. The user has to submit a valid ACCESS_TOKEN via headers
-2. AND a DB query must proof that the user belongs to the home (i.e. userId from ACCESS_TOKEN matches one in the list of userIds in Household table)
+2. The Token contains homeId and userId. homeId has to match url parameter {homeId}
+
+((AND a DB query must proof that the user belongs to the home (i.e. userId from ACCESS_TOKEN matches one in the list of userIds in Household table))) // Old 
