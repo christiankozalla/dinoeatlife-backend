@@ -71,14 +71,11 @@ export const authPlugin: Hapi.Plugin<null> = {
               data: {
                 email,
                 password: await hash(password, 10),
-                household: {
+                home: {
                   create: {
                     name: "Default Home Name"
                   }
                 }
-              },
-              select: {
-                id: true
               }
             });
 
@@ -88,7 +85,7 @@ export const authPlugin: Hapi.Plugin<null> = {
 
             const credentials = {
               userId: newUser.id,
-              accessToken: createAccessToken(newUser.id)
+              accessToken: createAccessToken(newUser)
             };
 
             return h.response(credentials).code(201);
@@ -142,7 +139,7 @@ const validateUserPassword = async (
     // Passed to request.auth.credentials in route handler
     const credentials = {
       userId: registeredUser.id,
-      accessToken: createAccessToken(registeredUser.id)
+      accessToken: createAccessToken(registeredUser)
     };
 
     return { isValid, credentials };
