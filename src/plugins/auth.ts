@@ -18,6 +18,7 @@ declare module "@hapi/hapi" {
 
 interface AccessTokenPayload {
   userId: number;
+  homeId: number;
 }
 
 export const authPlugin: Hapi.Plugin<null> = {
@@ -37,7 +38,7 @@ export const authPlugin: Hapi.Plugin<null> = {
     server.auth.strategy("authPassword", "basic", { validate: validateUserPassword });
 
     server.auth.strategy("authJWT", "jwt", {
-      key: process.env.ACCESS_TOKEN_SECRET,
+      key: process.env.ACCESS_TOKEN_SECRET!,
       verifyOptions: { algorithms: ["HS256"] },
       validate: validateAccessToken
     });
@@ -116,8 +117,6 @@ const validateUserPassword = async (
 ) => {
   const { prisma } = request.server.app;
 
-  request.server.log("data", { username, password });
-
   try {
     // Fetch user from DB
     const registeredUser = await prisma.user.findUnique({
@@ -166,6 +165,7 @@ const validateAccessToken = async (
     if (!user) {
       return { isValid: false };
     } else {
+      // { userId, homeId } are being passed to request.auth.credentials here
       return { isValid: true };
     }
   } catch (err) {
