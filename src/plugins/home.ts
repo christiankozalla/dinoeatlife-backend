@@ -19,6 +19,12 @@ interface IngredientInput {
   unit: string;
 }
 
+interface RecipeInput {
+  name: Recipe["name"];
+  duration: Recipe["duration"];
+  description: Recipe["description"];
+}
+
 export const homePlugin: Hapi.Plugin<null> = {
   name: "home",
   dependencies: ["prisma", "hapi-auth-jwt2"],
@@ -95,7 +101,7 @@ export const homePlugin: Hapi.Plugin<null> = {
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
-          const ingredientId = parseInt(request.params.id, 10) as Ingredient["id"];
+          const ingredientId = parseInt(request.params.ingredientId, 10) as Ingredient["id"];
 
           try {
             await prisma.ingredient.delete({
@@ -104,7 +110,127 @@ export const homePlugin: Hapi.Plugin<null> = {
               }
             });
 
+            return h.response().code(204);
+          } catch (err) {
+            return Boom.badImplementation(err);
+          }
+        }
+      },
+      {
+        method: "POST",
+        path: "/home/recipes",
+        options: {
+          validate: {
+            payload: validateRecipeInput
+          }
+        },
+        handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
+          const { prisma } = request.server.app;
+          const { credentials } = request.auth;
+          const { name, duration, description } = request.payload as RecipeInput;
+
+          try {
+            await prisma.recipe.create({
+              data: {
+                homeId: credentials.homeId,
+                userId: credentials.userId,
+                name,
+                duration,
+                description
+              }
+            });
+
             return h.response().code(201);
+          } catch (err) {
+            return Boom.badImplementation(err);
+          }
+        }
+      },
+      {
+        method: "PUT",
+        path: "/home/recipes/{recipeId}",
+        options: {
+          validate: {
+            payload: validateRecipeInput
+          }
+        },
+        handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
+          const { prisma } = request.server.app;
+          const { credentials } = request.auth;
+          const { name, duration, description } = request.payload as RecipeInput;
+          const recipeId = parseInt(request.params.recipeId, 10) as Recipe["id"];
+
+          try {
+            let recipe = await prisma.recipe.findUnique({
+              where: {
+                id: recipeId
+              }
+            });
+
+            if (!recipe) {
+              return Boom.notFound();
+            }
+
+            if (recipe.userId === credentials.userId && recipe.homeId === credentials.homeId) {
+              // Update recipe if authenticated user has created it - i.e. is the owner
+              await prisma.recipe.update({
+                where: {
+                  id: recipe.id
+                },
+                data: {
+                  homeId: credentials.homeId,
+                  userId: credentials.userId,
+                  name,
+                  duration,
+                  description
+                }
+              });
+
+              return h.response().code(204);
+            } else {
+              return Boom.unauthorized();
+            }
+          } catch (err) {
+            return Boom.badImplementation(err);
+          }
+        }
+      },
+      {
+        method: "DELETE",
+        path: "/home/recipes/{recipeId}",
+        options: {
+          validate: {
+            payload: validateRecipeInput
+          }
+        },
+        handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
+          const { prisma } = request.server.app;
+          const { credentials } = request.auth;
+          const recipeId = parseInt(request.params.recipeId, 10) as Recipe["id"];
+
+          try {
+            let recipe = await prisma.recipe.findUnique({
+              where: {
+                id: recipeId
+              }
+            });
+
+            if (!recipe) {
+              return Boom.notFound();
+            }
+
+            if (recipe.userId === credentials.userId && recipe.homeId === credentials.homeId) {
+              // Update recipe if authenticated user has created it - i.e. is the owner
+              await prisma.recipe.delete({
+                where: {
+                  id: recipe.id
+                }
+              });
+
+              return h.response().code(204);
+            } else {
+              return Boom.unauthorized();
+            }
           } catch (err) {
             return Boom.badImplementation(err);
           }
@@ -117,4 +243,9 @@ export const homePlugin: Hapi.Plugin<null> = {
 const validateIngredientInput = Joi.object({
   name: Joi.string().required(),
   unit: Joi.string().required()
+});
+
+const validateRecipeInput = Joi.object({
+  name: Joi.string().max(255).required(),
+  description: Joi.string().required()
 });
