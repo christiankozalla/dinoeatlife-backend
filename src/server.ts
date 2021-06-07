@@ -38,7 +38,14 @@ export async function createServer(): Promise<Hapi.Server> {
   });
 
   // Register Hapi plugins -- like middleware
-  await server.register([hapiAuthBasic, hapiAuthJWT, prismaPlugin, authPlugin, profilePlugin, homePlugin]);
+  await server.register([
+    hapiAuthBasic,
+    hapiAuthJWT,
+    prismaPlugin,
+    authPlugin,
+    profilePlugin,
+    homePlugin
+  ]);
 
   server.route([
     {
@@ -48,7 +55,7 @@ export async function createServer(): Promise<Hapi.Server> {
         auth: false
       },
       handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
-        return h.response({ message: "Hello from Hapi Backend"}).code(200);
+        return h.response({ message: "Hello from Hapi Backend" }).code(200);
       }
     },
     {
