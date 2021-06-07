@@ -2,21 +2,21 @@
 
 The Household (aka home) entity / table is a reference for all shared resources within a home of many users
 
+- GET /home - returns all recipes and ingredients of a home (having homeId as foreign key) for the authenticated user
+
 All users of a home can perform CRUD on ingredients
 
-- GET /home/{homeId}/ingredients
-- POST /home/{homeId}/ingredients
-- PUT /home/{homeId}/ingredients/{ingredientId}
-- DELETE /home/{homeId}/ingredients/{ingredientId}
+- GET /home/ingredients
+- POST /home/ingredients
+- PUT /home/ingredients/{ingredientId}
+- DELETE /home/ingredients/{ingredientId}
 
 A user can perform CRUD on all his recipes, meals and posts
 
-- GET /home/{homeId}/recipes - possible for all users of the home, ACCESS_TOKEN is proof that user is part of household
-- POST /home/{homeId}/recipes - creates a new recipe, userId attached as creator
-- PUT /home/{homeId}/recipes/{recipeId} - updates an existing recipe, userId in ACCESS_TOKEN must match creator
-- DELETE /home/{homeId}/recipes/{ingredientId} - deletes an existing recipe, userId in ACCESS_TOKEN must match creator
-
-- GET /home/{homeId}/posts - returns all posts from all users of the household
+- GET /home/recipes - possible for all users of the home, ACCESS_TOKEN is proof that user is part of household
+- POST /home/recipes - creates a new recipe, userId attached as creator
+- PUT /home/recipes/{recipeId} - updates an existing recipe, userId in ACCESS_TOKEN must match creator
+- DELETE /home/recipes/{ingredientId} - deletes an existing recipe, userId in ACCESS_TOKEN must match creator
 
 Authentication and Authorization:
 
