@@ -1,7 +1,7 @@
 import Hapi from "@hapi/hapi";
 import { Ingredient, Recipe, PrismaClient } from "@prisma/client";
 import Boom from "@hapi/boom";
-import { userIsAuthorized } from "../util/authorization";
+import Joi from "joi";
 
 declare module "@hapi/hapi" {
   interface ServerApplicationState {
@@ -12,6 +12,11 @@ declare module "@hapi/hapi" {
     userId: number;
     homeId: number;
   }
+}
+
+interface IngredientInput {
+  name: string;
+  unit: string;
 }
 
 export const homePlugin: Hapi.Plugin<null> = {
@@ -51,7 +56,65 @@ export const homePlugin: Hapi.Plugin<null> = {
             return Boom.badImplementation(err);
           }
         }
+      },
+      {
+        method: "POST",
+        path: "/home/ingredients",
+        options: {
+          validate: {
+            payload: validateIngredientInput
+          }
+        },
+        handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
+          const { prisma } = request.server.app;
+          const { credentials } = request.auth;
+          const { name, unit } = request.payload as IngredientInput;
+
+          try {
+            await prisma.ingredient.create({
+              data: {
+                homeId: credentials.homeId,
+                name,
+                unit
+              }
+            });
+
+            return h.response().code(201);
+          } catch (err) {
+            return Boom.badImplementation(err);
+          }
+        }
+      },
+      {
+        method: "DELETE",
+        path: "/home/ingredients/{ingredientId}",
+        options: {
+          validate: {
+            payload: validateIngredientInput
+          }
+        },
+        handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
+          const { prisma } = request.server.app;
+          const ingredientId = parseInt(request.params.id, 10) as Ingredient["id"];
+
+          try {
+            await prisma.ingredient.delete({
+              where: {
+                id: ingredientId
+              }
+            });
+
+            return h.response().code(201);
+          } catch (err) {
+            return Boom.badImplementation(err);
+          }
+        }
       }
     ]);
   }
 };
+
+const validateIngredientInput = Joi.object({
+  name: Joi.string().required(),
+  unit: Joi.string().required()
+});
