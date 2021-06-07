@@ -2,20 +2,17 @@ import Hapi from "@hapi/hapi";
 import { Ingredient, Recipe, PrismaClient } from "@prisma/client";
 import Boom from "@hapi/boom";
 import { userIsAuthorized } from "../util/authorization";
-import Joi from "joi";
 
 declare module "@hapi/hapi" {
   interface ServerApplicationState {
     prisma: PrismaClient;
   }
-}
 
-type credentials = {
-  userId: number;
-  homeId: number;
-  iat: number;
-  exp: number;
-};
+  interface AuthCredentials {
+    userId: number;
+    homeId: number;
+  }
+}
 
 export const homePlugin: Hapi.Plugin<null> = {
   name: "home",
@@ -35,20 +32,20 @@ export const homePlugin: Hapi.Plugin<null> = {
 
           if (homeId === credentials.homeId) {
             try {
-              if (userIsAuthorized(homeId, credentials.userId as credentials["userId"], prisma)) {
+              if (userIsAuthorized(homeId, credentials.userId, prisma)) {
                 // The user truely belongs to the home
 
                 // Fetch all recipes
                 const recipes: Recipe[] = await prisma.recipe.findMany({
                   where: {
-                    homeId: credentials.homeId as credentials["homeId"]
+                    homeId: credentials.homeId
                   }
                 });
 
                 // Fetch all ingredients
                 const ingredients: Ingredient[] = await prisma.ingredient.findMany({
                   where: {
-                    homeId: credentials.homeId as credentials["homeId"]
+                    homeId: credentials.homeId
                   }
                 });
 
