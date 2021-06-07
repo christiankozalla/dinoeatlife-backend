@@ -52,6 +52,7 @@
     "hapi-auth-jwt2": "^10.2.0",
     "hapi-pino": "^8.3.0",
     "joi": "^17.4.0",
+    "joi-extract-type": "0.0.6",
     "jsonwebtoken": "^8.5.1"
   },
   "prettier": {
