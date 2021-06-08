@@ -41,19 +41,19 @@ export const homePlugin: Hapi.Plugin<null> = {
           const { credentials } = request.auth;
 
           try {
-            // The user truely belongs to the home
-
             // Fetch all recipes
             const recipes: Recipe[] = await prisma.recipe.findMany({
               where: {
-                homeId: credentials.homeId
+                homeId: credentials.homeId,
+                isDeleted: false
               }
             });
 
             // Fetch all ingredients
             const ingredients: Ingredient[] = await prisma.ingredient.findMany({
               where: {
-                homeId: credentials.homeId
+                homeId: credentials.homeId,
+                isDeleted: false
               }
             });
 
@@ -74,15 +74,15 @@ export const homePlugin: Hapi.Plugin<null> = {
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
           const { credentials } = request.auth;
-          const { name, unit } = request.payload as IngredientInput;
+          const ingredients = request.payload as IngredientInput[];
 
           try {
-            await prisma.ingredient.create({
-              data: {
+            await prisma.ingredient.createMany({
+              data: ingredients.map((ingredient) => ({
                 homeId: credentials.homeId,
-                name,
-                unit
-              }
+                name: ingredient.name,
+                unit: ingredient.unit
+              }))
             });
 
             return h.response().code(201);
@@ -101,14 +101,30 @@ export const homePlugin: Hapi.Plugin<null> = {
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
+          const { credentials } = request.auth;
           const ingredientId = parseInt(request.params.ingredientId, 10) as Ingredient["id"];
 
           try {
-            await prisma.ingredient.delete({
+            let ingredient = await prisma.ingredient.findUnique({
               where: {
                 id: ingredientId
               }
             });
+
+            if (!ingredient) {
+              return Boom.notFound();
+            }
+
+            if (ingredient.homeId === credentials.homeId) {
+              await prisma.ingredient.update({
+                where: {
+                  id: ingredientId
+                },
+                data: {
+                  isDeleted: true
+                }
+              });
+            }
 
             return h.response().code(204);
           } catch (err) {
@@ -198,11 +214,6 @@ export const homePlugin: Hapi.Plugin<null> = {
       {
         method: "DELETE",
         path: "/home/recipes/{recipeId}",
-        options: {
-          validate: {
-            payload: validateRecipeInput
-          }
-        },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
           const { credentials } = request.auth;
@@ -221,9 +232,21 @@ export const homePlugin: Hapi.Plugin<null> = {
 
             if (recipe.userId === credentials.userId && recipe.homeId === credentials.homeId) {
               // Update recipe if authenticated user has created it - i.e. is the owner
-              await prisma.recipe.delete({
+
+              // Really delete the recipe
+              // await prisma.recipe.delete({
+              //   where: {
+              //     id: recipe.id
+              //   }
+              // });
+
+              // OR set isDeleted to true - i.e. soft delete
+              await prisma.recipe.update({
                 where: {
-                  id: recipe.id
+                  id: recipeId
+                },
+                data: {
+                  isDeleted: true
                 }
               });
 
@@ -240,12 +263,15 @@ export const homePlugin: Hapi.Plugin<null> = {
   }
 };
 
-const validateIngredientInput = Joi.object({
-  name: Joi.string().required(),
-  unit: Joi.string().required()
-});
+const validateIngredientInput = Joi.array().items(
+  Joi.object({
+    name: Joi.string().required(),
+    unit: Joi.string().required()
+  })
+);
 
 const validateRecipeInput = Joi.object({
   name: Joi.string().max(255).required(),
+  duration: Joi.number().required(),
   description: Joi.string().required()
 });
