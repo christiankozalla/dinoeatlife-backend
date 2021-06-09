@@ -47,6 +47,15 @@ export async function createServer(): Promise<Hapi.Server> {
     homePlugin
   ]);
 
+  server.state("blim", {
+    ttl: 604800000, // 7d
+    isSecure: true,
+    isHttpOnly: true,
+    encoding: "none",
+    clearInvalid: true,
+    strictHeader: true
+  });
+
   server.route([
     {
       method: "GET",
@@ -56,13 +65,6 @@ export async function createServer(): Promise<Hapi.Server> {
       },
       handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
         return h.response({ message: "Hello from Hapi Backend" }).code(200);
-      }
-    },
-    {
-      method: "GET",
-      path: "/protected",
-      handler: (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
-        return "Only for authenticated users with a valid JWT";
       }
     }
   ]);
