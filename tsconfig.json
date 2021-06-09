@@ -6,7 +6,9 @@
     "module": "commonjs",
     "strict": true,
     "lib": ["esnext"],
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true
   },
   "exclude": ["dist", "prisma", "tests"]
 }
