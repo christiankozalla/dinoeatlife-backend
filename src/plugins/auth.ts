@@ -306,3 +306,7 @@ const validateAccessToken = async (
     return Boom.badImplementation("Error in validateAccessToken");
   }
 };
+
+const generateEmailToken = () => {
+  return Math.random().toString(36).substr(2, 9);
+};
