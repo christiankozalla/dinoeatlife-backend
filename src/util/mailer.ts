@@ -1,5 +1,8 @@
 import nodemailer from "nodemailer";
 import fs from "fs";
+import path from "path";
+
+import { Profile, User, Token } from "@prisma/client";
 
 const transporter = nodemailer.createTransport({
   host: "smtp.ionos.de",
@@ -19,13 +22,29 @@ transporter.verify(function (error, success) {
   }
 });
 
-export default transporter;
+async function sendVerifyMail({
+  userName,
+  userEmail,
+  emailToken
+}: {
+  userName: Profile["name"];
+  userEmail: User["email"];
+  emailToken: Token["token"];
+}) {
+  let emailTemplate = fs.readFileSync(path.resolve(__dirname, "../../email/validate-email.html"), {
+    encoding: "utf-8"
+  });
 
-async function send() {
-  let emailTemplate = fs.readFileSync(process.cwd()+"/email/verify-mail.html", { encoding: "utf-8" });
-  let username = "Michael";
-  let userEmail = "michael.kozalla@yahoo.de"
-  let stringifiedHtml = emailTemplate.replace("[[USERNAME]]", username);
+  // Url Param: emailToken - Holds the base64 encoded emailToken
+  // Url Param: user - Holds the base64 encoded userEmail
+
+  const encodedEmail = Buffer.from(userEmail).toString("base64url");
+  const encodedToken = Buffer.from(emailToken).toString("base64url");
+
+  let stringifiedHtml = emailTemplate
+    .replaceAll("[[USERNAME]]", userName || "Puroviva User")
+    .replaceAll("[[USEREMAIL]]", encodedEmail)
+    .replaceAll("[[EMAILTOKEN]]", encodedToken);
 
   const message = {
     from: "christian@puroviva.de",
@@ -34,9 +53,14 @@ async function send() {
     html: stringifiedHtml
   };
 
-  const sent = await transporter.sendMail(message);
+  try {
+    const sent = await transporter.sendMail(message);
 
-  console.log(sent);
+    return sent;
+  } catch (err) {
+    console.error(err);
+    return err;
+  }
 }
 
-send();
+export default { sendVerifyMail };
