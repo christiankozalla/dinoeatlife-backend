@@ -262,7 +262,7 @@ export const authPlugin: Hapi.Plugin<null> = {
                   id: true,
                   email: true,
                   homeId: true,
-                  emailToken
+                  emailToken: true
                 }
               });
 
