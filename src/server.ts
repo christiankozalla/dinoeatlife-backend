@@ -9,6 +9,7 @@ import { prismaPlugin } from "./plugins/prisma";
 import { authPlugin } from "./plugins/auth";
 import { homePlugin } from "./plugins/home";
 import { profilePlugin } from "./plugins/profile";
+import { postsPlugin } from "./plugins/posts";
 
 // Config
 import dotenv from "dotenv";
@@ -44,7 +45,8 @@ export async function createServer(): Promise<Hapi.Server> {
     prismaPlugin,
     authPlugin,
     profilePlugin,
-    homePlugin
+    homePlugin,
+    postsPlugin
   ]);
 
   server.state("blim", {
