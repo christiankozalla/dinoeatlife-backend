@@ -210,31 +210,36 @@ export const authPlugin: Hapi.Plugin<null> = {
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
-          const refreshToken = request.state.blim;
+          const refreshToken: string | null = request.state.blim;
 
-          // Verify the token
-          const decoded = verifyRefreshToken(refreshToken);
+          if (refreshToken) {
+            // Verify the token
+            const decoded = verifyRefreshToken(refreshToken);
 
-          // Check if hosts are the same
-          if (decoded && decoded.remoteAddress === request.info.remoteAddress) {
-            // Sign a new access token
-            const credentials: ResponseOnAuth = {
-              userId: decoded.userId,
-              homeId: decoded.homeId,
-              accessToken: createAccessToken(decoded.userId, decoded.homeId)
-            };
+            // Check if hosts are the same
+            if (decoded && decoded.remoteAddress === request.info.remoteAddress) {
+              // Sign a new access token
+              const credentials: ResponseOnAuth = {
+                userId: decoded.userId,
+                homeId: decoded.homeId,
+                accessToken: createAccessToken(decoded.userId, decoded.homeId)
+              };
 
-            return h.response(credentials).code(200);
-          }
-
-          // OR Reject the request if invalid
-          // Might wanna delete token - i.e. revoke token and log the user out
-          await prisma.token.delete({
-            where: {
-              userId: decoded.userId
+              return h.response(credentials).code(200);
+            } else {
+              // OR Reject the request if invalid
+              // Might wanna delete token - i.e. revoke token and log the user out
+              await prisma.token.delete({
+                where: {
+                  userId: decoded.userId
+                }
+              });
+              return Boom.badRequest();
             }
-          });
-          return Boom.badRequest();
+          } else {
+            // refreshToken === null
+            return Boom.badRequest();
+          }
         }
       },
       {
