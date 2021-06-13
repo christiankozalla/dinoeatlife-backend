@@ -27,6 +27,41 @@ const seedData = [
   }
 ];
 
+const ingredients = [
+  {
+    name: "Milch",
+    unit: "1L"
+  },
+  {
+    name: "Butter",
+    unit: "250g"
+  },
+  {
+    name: "Schweine-Ohren",
+    unit: "2"
+  },
+  {
+    name: "Tralala",
+    unit: "200g"
+  },
+  {
+    name: "Hakuna",
+    unit: "400kg"
+  },
+  {
+    name: "Matata",
+    unit: "11t"
+  }
+];
+
+const recipes = [
+  {
+    name: "Erdbeer-Torte",
+    duration: 200,
+    description: "Make the cake"
+  }
+];
+
 //Add second user to home
 const secondUser = {
   email: "stephie@stephie.de",
@@ -88,8 +123,8 @@ async function main() {
   await prisma.user.create({
     data: {
       ...secondUser,
-      homeId: 1,
-    },
+      homeId: 1
+    }
   });
   console.log(`Seeding finished.`);
 }

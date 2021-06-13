@@ -1,5 +1,5 @@
 import Hapi from "@hapi/hapi";
-import { Ingredient, Recipe, PrismaClient } from "@prisma/client";
+import { Ingredient, Recipe, User, PrismaClient } from "@prisma/client";
 import Boom from "@hapi/boom";
 import Joi from "joi";
 
@@ -9,14 +9,16 @@ declare module "@hapi/hapi" {
   }
 
   interface AuthCredentials {
-    userId: number;
-    homeId: number;
+    email?: User["email"];
+    password?: User["password"];
+    userId: User["id"];
+    homeId: User["homeId"]
   }
 }
 
 interface IngredientInput {
-  name: string;
-  unit: string;
+  name: Ingredient["name"];
+  unit: Ingredient["unit"];
 }
 
 interface RecipeInput {
