@@ -1,20 +1,17 @@
 import Hapi from "@hapi/hapi";
-import { User, Token, PrismaClient } from "@prisma/client";
+import { Home, Profile, User, Token, PrismaClient } from "@prisma/client";
 import Boom from "@hapi/boom";
 import { compare, hash } from "bcryptjs";
 import Joi from "joi";
+import mailer from "../util/mailer";
 
 import {
   createAccessToken,
   createRefreshToken,
   verifyRefreshToken,
-  RefreshTokenPayload,
   AccessTokenPayload,
-  ResponseOnAuth,
-  verifyAccessToken
+  ResponseOnAuth
 } from "../util/tokens";
-import { TokenExpiredError } from "jsonwebtoken";
-import { userIsAuthorized } from "../util/authorization";
 
 declare module "@hapi/hapi" {
   interface AuthCredentials {
@@ -26,6 +23,13 @@ declare module "@hapi/hapi" {
   interface ServerApplicationState {
     prisma: PrismaClient;
   }
+}
+
+interface RegisteringUser {
+  email: User["email"];
+  password: User["password"];
+  name: Profile["name"];
+  homeName: Home["name"];
 }
 
 export const authPlugin: Hapi.Plugin<null> = {
@@ -62,64 +66,90 @@ export const authPlugin: Hapi.Plugin<null> = {
           validate: {
             payload: Joi.object({
               email: Joi.string().email().required(),
-              password: Joi.string().required()
+              password: Joi.string().required(),
+              name: Joi.string().required(),
+              homeName: Joi.string().required()
             })
           }
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
-          const { email, password } = request.payload as User;
+          const { email, password, name, homeName } = request.payload as RegisteringUser;
 
-          if (!email || !password) {
+          if (!email || !password || !name || !homeName) {
             return Boom.badRequest("Credentials missing");
           }
 
           try {
-            const newUser = await prisma.user.create({
-              data: {
-                email,
-                password: await hash(password, 10),
-                home: {
-                  create: {
-                    name: "Default Home Name"
+            const emailToken = generateEmailToken();
+
+            const sent = await mailer.sendVerifyMail({
+              userName: name,
+              userEmail: email,
+              emailToken
+            });
+            request.server.log("info", sent);
+
+            if (sent) {
+              const newUser = await prisma.user.create({
+                data: {
+                  email,
+                  password: await hash(password, 10),
+                  home: {
+                    create: {
+                      name: homeName
+                    }
+                  },
+                  profile: {
+                    create: {
+                      name
+                    }
+                  },
+                  emailToken: {
+                    create: {
+                      emailToken
+                    }
                   }
                 }
+              });
+
+              if (!newUser) {
+                return Boom.badData("Email already exists");
               }
-            });
 
-            if (!newUser) {
-              return Boom.badData("Email already exists");
-            }
-
-            const credentials: ResponseOnAuth = {
-              userId: newUser.id,
-              homeId: newUser.homeId,
-              accessToken: createAccessToken(newUser.id, newUser.homeId)
-            };
-
-            const refreshToken = createRefreshToken(
-              { userId: newUser.id, homeId: newUser.homeId },
-              request.info.remoteAddress
-            );
-
-            const tokenStored = await prisma.token.create({
-              data: {
+              const credentials: ResponseOnAuth = {
                 userId: newUser.id,
-                token: refreshToken,
-                createdAt: new Date().toISOString(),
-                expiresAt: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString() // 7d from now
-              }
-            });
+                homeId: newUser.homeId,
+                accessToken: createAccessToken(newUser.id, newUser.homeId)
+              };
 
-            if (!tokenStored) {
-              return Boom.badImplementation();
+              return h.response(credentials).code(201);
+            } else {
+              return Boom.badImplementation("Error sending Mail");
             }
+
+            /* Give the user a refresh token once his email is verified! */
+            // const refreshToken = createRefreshToken(
+            //   { userId: newUser.id, homeId: newUser.homeId },
+            //   request.info.remoteAddress
+            // );
+
+            // const tokenStored = await prisma.token.create({
+            //   data: {
+            //     userId: newUser.id,
+            //     token: refreshToken,
+            //     createdAt: new Date().toISOString(),
+            //     expiresAt: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString() // 7d from now
+            //   }
+            // });
+
+            // if (!tokenStored) {
+            //   return Boom.badImplementation();
+            // }
 
             // Store a 24h random 8-digit string as EMAIL_TOKEN
             // User gets property "isVerified" @default(false)
             // Prompt authenticated users eventually for the autogenerated number - when they use the ACCESS_TOKEN
-
-            return h.response(credentials).state("blim", refreshToken).code(201);
           } catch (err) {
             return Boom.badImplementation(err);
           }
@@ -143,51 +173,25 @@ export const authPlugin: Hapi.Plugin<null> = {
             });
 
             if (userGotToken) {
+              // credentials already include a fresh accessToken
               return h.response(credentials).code(200);
             } else {
-              return Boom.conflict();
-            }
-          } catch (err) {
-            return Boom.badImplementation();
-          }
+              const refreshToken = createRefreshToken(credentials, request.info.remoteAddress);
 
-          try {
-            const refreshToken = createRefreshToken(credentials, request.info.remoteAddress);
+              let storedToken = await prisma.token.create({
+                data: {
+                  userId: credentials.userId,
+                  token: refreshToken,
+                  createdAt: new Date().toISOString(),
+                  expiresAt: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString() // 7d from now
+                }
+              });
 
-            // let storedToken = await prisma.token.upsert({
-            //   where: {
-            //     userId: credentials.userId
-            //   },
-            //   select: {
-            //     token: true
-            //   },
-            //   create: {
-            //     userId: credentials.userId,
-            //     token: refreshToken,
-            //     createdAt: new Date().toISOString(),
-            //     expiresAt: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString() // 7d from now
-            //   },
-            //   update: {
-            //     userId: credentials.userId,
-            //     token: refreshToken,
-            //     createdAt: new Date().toISOString(),
-            //     expiresAt: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString() // 7d from now
-            //   }
-            // });
-
-            let storedToken = await prisma.token.create({
-              data: {
-                userId: credentials.userId,
-                token: refreshToken,
-                createdAt: new Date().toISOString(),
-                expiresAt: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString() // 7d from now
+              if (storedToken) {
+                return h.response(credentials).state("blim", refreshToken).code(200);
+              } else {
+                return Boom.conflict();
               }
-            });
-
-            if (storedToken) {
-              return h.response(credentials).state("blim", refreshToken).code(200);
-            } else {
-              return Boom.conflict();
             }
           } catch (err) {
             return Boom.badImplementation(err);
@@ -206,31 +210,137 @@ export const authPlugin: Hapi.Plugin<null> = {
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
-          const refreshToken = request.state.blim;
+          const refreshToken: string | null = request.state.blim;
 
-          // Verify the token
-          const decoded = verifyRefreshToken(refreshToken);
+          if (refreshToken) {
+            // Verify the token
+            const decoded = verifyRefreshToken(refreshToken);
 
-          // Check if hosts are the same
-          if (decoded && decoded.remoteAddress === request.info.remoteAddress) {
-            // Sign a new access token
-            const credentials: ResponseOnAuth = {
-              userId: decoded.userId,
-              homeId: decoded.homeId,
-              accessToken: createAccessToken(decoded.userId, decoded.homeId)
-            };
+            // Check if hosts are the same
+            if (decoded && decoded.remoteAddress === request.info.remoteAddress) {
+              // Sign a new access token
+              const credentials: ResponseOnAuth = {
+                userId: decoded.userId,
+                homeId: decoded.homeId,
+                accessToken: createAccessToken(decoded.userId, decoded.homeId)
+              };
 
-            return h.response(credentials).code(200);
-          }
-
-          // OR Reject the request if invalid
-          // Might wanna delete token - i.e. revoke token and log the user out
-          await prisma.token.delete({
-            where: {
-              userId: decoded.userId
+              return h.response(credentials).code(200);
+            } else {
+              // OR Reject the request if invalid
+              // Might wanna delete token - i.e. revoke token and log the user out
+              await prisma.token.delete({
+                where: {
+                  userId: decoded.userId
+                }
+              });
+              return Boom.badRequest();
             }
-          });
-          return Boom.badRequest();
+          } else {
+            // refreshToken === null
+            return Boom.badRequest();
+          }
+        }
+      },
+      {
+        method: "GET",
+        path: "/validate",
+        options: {
+          auth: false // Would it be good to require the accessToken aswell?
+        },
+        handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
+          const { prisma } = request.server.app;
+          const { user, emailToken } = request.query;
+
+          if (user && emailToken) {
+            // Validate emailToken
+            const userEmail = Buffer.from(user, "base64url").toString("utf-8");
+            const decodedEmailToken = Buffer.from(emailToken, "base64url").toString("utf-8");
+
+            try {
+              // 1. Fetch User + stored emailToken
+              const registeredUser = await prisma.user.findUnique({
+                where: {
+                  email: userEmail
+                },
+                select: {
+                  id: true,
+                  email: true,
+                  homeId: true,
+                  emailToken: true
+                }
+              });
+
+              if (!registeredUser || !registeredUser.emailToken) {
+                return Boom.notFound();
+              }
+
+              // 2. Compare emailTokens
+              if (registeredUser.emailToken.emailToken !== decodedEmailToken) {
+                // 2.a false => delete user email
+
+                // Soft delete - But then handle those cases correctly - always...
+                // await prisma.user.update({
+                //   where: {
+                //     email: userEmail
+                //   },
+                //   data: {
+                //     isDeleted: true
+                //   }
+                // });
+
+                await prisma.user.update({
+                  where: {
+                    id: registeredUser.id
+                  },
+                  data: {
+                    token: {
+                      delete: true
+                    },
+                    emailToken: {
+                      delete: true
+                    },
+                    profile: {
+                      delete: true
+                    }
+                  }
+                });
+
+                await prisma.user.delete({
+                  where: {
+                    id: registeredUser.id
+                  }
+                });
+
+                return Boom.badData();
+              } else {
+                // 2.b true => send back refreshToken
+                const refreshToken = createRefreshToken(
+                  { userId: registeredUser.id, homeId: registeredUser.homeId },
+                  request.info.remoteAddress
+                );
+
+                const credentials: ResponseOnAuth = {
+                  userId: registeredUser.id,
+                  homeId: registeredUser.homeId,
+                  accessToken: createAccessToken(registeredUser.id, registeredUser.homeId)
+                };
+
+                await prisma.user.update({
+                  where: {
+                    email: userEmail
+                  },
+                  data: {
+                    isVerfied: true
+                  }
+                });
+
+                return h.response(credentials).state("blim", refreshToken).code(200);
+              }
+            } catch (err) {
+              return Boom.badImplementation(err);
+            }
+          }
         }
       }
     ]);
@@ -272,7 +382,7 @@ const validateUserPassword = async (
 
     return { isValid, credentials };
   } catch (err) {
-    return Boom.badImplementation("Error in validateUserPassword");
+    return Boom.badImplementation("Error in validateUserPassword" + err);
   }
 };
 
@@ -303,6 +413,10 @@ const validateAccessToken = async (
       return { isValid: true };
     }
   } catch (err) {
-    return Boom.badImplementation("Error in validateAccessToken");
+    return Boom.badImplementation("Error in validateAccessToken" + err);
   }
+};
+
+const generateEmailToken = () => {
+  return Math.random().toString(36).substr(2, 9);
 };
