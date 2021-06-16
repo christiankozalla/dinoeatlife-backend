@@ -18,7 +18,8 @@ export const profilePlugin: Hapi.Plugin<null> = {
         method: "GET",
         path: "/profile/{userId}",
         options: {
-          auth: false
+          auth: false,
+          tags: ["api"]
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
@@ -61,7 +62,8 @@ export const profilePlugin: Hapi.Plugin<null> = {
                 }
               }
             }
-          }
+          },
+          tags: ["api"]
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           // Creates a new Profile, if none exists yet for the authenticated user
@@ -105,7 +107,8 @@ export const profilePlugin: Hapi.Plugin<null> = {
                 }
               }
             }
-          }
+          },
+          tags: ["api"]
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
@@ -147,6 +150,9 @@ export const profilePlugin: Hapi.Plugin<null> = {
       {
         method: "DELETE",
         path: "/profile/{userId}",
+        options: {
+          tags: ["api"]
+        },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
           const userId: number = parseInt(request.params.userId, 10);

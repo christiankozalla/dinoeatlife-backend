@@ -12,7 +12,7 @@ declare module "@hapi/hapi" {
     email?: User["email"];
     password?: User["password"];
     userId: User["id"];
-    homeId: User["homeId"]
+    homeId: User["homeId"];
   }
 }
 
@@ -35,6 +35,9 @@ export const homePlugin: Hapi.Plugin<null> = {
       {
         method: "GET",
         path: "/home",
+        options: {
+          tags: ["api"]
+        },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           // Returns all resources of a Home for an authenticated User of the Home
           // Resources: Recipe[], Ingredient[]
@@ -71,7 +74,8 @@ export const homePlugin: Hapi.Plugin<null> = {
         options: {
           validate: {
             payload: validateIngredientInput
-          }
+          },
+          tags: ["api"]
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
@@ -99,7 +103,8 @@ export const homePlugin: Hapi.Plugin<null> = {
         options: {
           validate: {
             payload: validateIngredientInput
-          }
+          },
+          tags: ["api"]
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
@@ -140,7 +145,8 @@ export const homePlugin: Hapi.Plugin<null> = {
         options: {
           validate: {
             payload: validateRecipeInput
-          }
+          },
+          tags: ["api"]
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
@@ -170,7 +176,8 @@ export const homePlugin: Hapi.Plugin<null> = {
         options: {
           validate: {
             payload: validateRecipeInput
-          }
+          },
+          tags: ["api"]
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
@@ -216,6 +223,9 @@ export const homePlugin: Hapi.Plugin<null> = {
       {
         method: "DELETE",
         path: "/home/recipes/{recipeId}",
+        options: {
+          tags: ["api"]
+        },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
           const { credentials } = request.auth;

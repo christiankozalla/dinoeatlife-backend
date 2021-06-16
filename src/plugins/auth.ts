@@ -70,7 +70,8 @@ export const authPlugin: Hapi.Plugin<null> = {
               name: Joi.string().required(),
               homeName: Joi.string().required()
             })
-          }
+          },
+          tags: ["api"]
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
@@ -159,7 +160,8 @@ export const authPlugin: Hapi.Plugin<null> = {
         method: "GET",
         path: "/login",
         options: {
-          auth: "authPassword"
+          auth: "authPassword",
+          tags: ["api"]
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
@@ -206,7 +208,8 @@ export const authPlugin: Hapi.Plugin<null> = {
           state: {
             parse: true,
             failAction: "error"
-          }
+          },
+          tags: ["api"]
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
@@ -246,7 +249,8 @@ export const authPlugin: Hapi.Plugin<null> = {
         method: "GET",
         path: "/validate",
         options: {
-          auth: false // Would it be good to require the accessToken aswell?
+          auth: false, // Would it be good to require the accessToken aswell?
+          tags: ["api"]
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
