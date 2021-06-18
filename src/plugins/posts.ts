@@ -191,4 +191,4 @@ export const postsPlugin: Hapi.Plugin<null> = {
 
 const validatePostInput = Joi.object({
   content: Joi.string().max(255).required()
-});
+}).label("post");

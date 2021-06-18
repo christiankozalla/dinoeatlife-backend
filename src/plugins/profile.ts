@@ -190,4 +190,4 @@ const profileValidation = Joi.object({
     github: Joi.string().optional(),
     website: Joi.string().optional()
   }).optional()
-});
+}).label("profile");

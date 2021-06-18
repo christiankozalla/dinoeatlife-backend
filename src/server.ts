@@ -37,7 +37,8 @@ export async function createServer(): Promise<Hapi.Server> {
   const swaggerOptions: HapiSwagger.RegisterOptions = {
     info: {
       title: "Puroviva Backend API Documentation"
-    }
+    },
+    definitionPrefix: "useLabel"
   };
   // // Register the logger and swagger
   await server.register([
@@ -52,13 +53,14 @@ export async function createServer(): Promise<Hapi.Server> {
       options: swaggerOptions
     },
     {
-    plugin: hapiPino,
-    options: {
-      prettyPrint: process.env.NODE_ENV !== "production",
-      // Redact Authorization headers, see https://getpino.io/#/docs/redaction
-      redact: ["req.headers.authorization"]
+      plugin: hapiPino,
+      options: {
+        prettyPrint: process.env.NODE_ENV !== "production",
+        // Redact Authorization headers, see https://getpino.io/#/docs/redaction
+        redact: ["req.headers.authorization"]
+      }
     }
-  }]);
+  ]);
 
   // Register Hapi plugins -- like middleware
   await server.register([

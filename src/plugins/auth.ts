@@ -69,9 +69,10 @@ export const authPlugin: Hapi.Plugin<null> = {
               password: Joi.string().required(),
               name: Joi.string().required(),
               homeName: Joi.string().required()
-            })
+            }).label("registeringUser")
           },
-          tags: ["api"]
+          tags: ["api"],
+          description: "Creates a new user. Sends Email-Verification"
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
@@ -399,8 +400,7 @@ const validateAccessToken = async (
   const { userId } = decoded;
 
   //const isValid = verifyAccessToken(decoded);
-
-  request.server.log("info", decoded);
+  // decoded cannot be null - hapi-auth-jwt2 throws an exception ealier if token malformed, expired, something else
 
   try {
     // Call to DB not necessary with JWT tokens
