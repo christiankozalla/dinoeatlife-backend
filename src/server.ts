@@ -29,7 +29,12 @@ const isProduction = process.env.NODE_ENV === "production";
 const server: Hapi.Server = Hapi.server({
   port: process.env.PORT || 4000,
   host: process.env.HOST || "0.0.0.0",
-  debug: false
+  debug: false,
+  routes: {
+    cors: {
+      origin: ["Access-Control-Allow-Origin", "http://localhost:8100"]
+    }
+  }
 });
 
 export async function createServer(): Promise<Hapi.Server> {
