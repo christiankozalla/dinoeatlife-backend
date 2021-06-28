@@ -12,7 +12,7 @@ declare module "@hapi/hapi" {
     email?: User["email"];
     password?: User["password"];
     userId: User["id"];
-    homeId: User["homeId"]
+    homeId: User["homeId"];
   }
 }
 
@@ -35,10 +35,12 @@ export const homePlugin: Hapi.Plugin<null> = {
       {
         method: "GET",
         path: "/home",
+        options: {
+          tags: ["api"],
+          description:
+            "Returns all resources of a Home for an authenticated User of the Home. Resources: Recipe[], Ingredient[]"
+        },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
-          // Returns all resources of a Home for an authenticated User of the Home
-          // Resources: Recipe[], Ingredient[]
-
           const { prisma } = request.server.app;
           const { credentials } = request.auth;
 
@@ -71,7 +73,9 @@ export const homePlugin: Hapi.Plugin<null> = {
         options: {
           validate: {
             payload: validateIngredientInput
-          }
+          },
+          tags: ["api"],
+          description: "Create an array of ingredients for the authenticated user."
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
@@ -99,7 +103,9 @@ export const homePlugin: Hapi.Plugin<null> = {
         options: {
           validate: {
             payload: validateIngredientInput
-          }
+          },
+          tags: ["api"],
+          description: "Delete a single ingredient by an authenticated user."
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
@@ -140,7 +146,9 @@ export const homePlugin: Hapi.Plugin<null> = {
         options: {
           validate: {
             payload: validateRecipeInput
-          }
+          },
+          tags: ["api"],
+          description: "Create a single recipe for the authenticated user."
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
@@ -170,7 +178,9 @@ export const homePlugin: Hapi.Plugin<null> = {
         options: {
           validate: {
             payload: validateRecipeInput
-          }
+          },
+          tags: ["api"],
+          description: "Update an existing recipe for the authenticated user."
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
@@ -216,6 +226,10 @@ export const homePlugin: Hapi.Plugin<null> = {
       {
         method: "DELETE",
         path: "/home/recipes/{recipeId}",
+        options: {
+          tags: ["api"],
+          description: "Delete an exisiting recipe for the authenticated user. Note: *Soft* delete!"
+        },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
           const { credentials } = request.auth;
@@ -269,11 +283,11 @@ const validateIngredientInput = Joi.array().items(
   Joi.object({
     name: Joi.string().required(),
     unit: Joi.string().required()
-  })
-);
+  }).label("ingredient")
+).label("ingredientArray");
 
 const validateRecipeInput = Joi.object({
   name: Joi.string().max(255).required(),
   duration: Joi.number().required(),
   description: Joi.string().required()
-});
+}).label("recipe");

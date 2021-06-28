@@ -27,7 +27,8 @@ export const postsPlugin: Hapi.Plugin<null> = {
         method: "GET",
         path: "/posts",
         options: {
-          auth: false
+          auth: false,
+          tags: ["api"]
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
@@ -50,7 +51,8 @@ export const postsPlugin: Hapi.Plugin<null> = {
         method: "GET",
         path: "/posts/{userId}",
         options: {
-          auth: false
+          auth: false,
+          tags: ["api"]
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
@@ -79,7 +81,8 @@ export const postsPlugin: Hapi.Plugin<null> = {
         options: {
           validate: {
             payload: validatePostInput
-          }
+          },
+          tags: ["api"]
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
@@ -106,7 +109,8 @@ export const postsPlugin: Hapi.Plugin<null> = {
         options: {
           validate: {
             payload: validatePostInput
-          }
+          },
+          tags: ["api"]
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
@@ -147,6 +151,9 @@ export const postsPlugin: Hapi.Plugin<null> = {
       {
         method: "DELETE",
         path: "/posts/{postId}",
+        options: {
+          tags: ["api"]
+        },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
           const { credentials } = request.auth;
@@ -184,4 +191,4 @@ export const postsPlugin: Hapi.Plugin<null> = {
 
 const validatePostInput = Joi.object({
   content: Joi.string().max(255).required()
-});
+}).label("post");

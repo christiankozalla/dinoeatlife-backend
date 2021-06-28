@@ -69,8 +69,10 @@ export const authPlugin: Hapi.Plugin<null> = {
               password: Joi.string().required(),
               name: Joi.string().required(),
               homeName: Joi.string().required()
-            })
-          }
+            }).label("registeringUser")
+          },
+          tags: ["api"],
+          description: "Creates a new user. Sends Email-Verification"
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
@@ -159,7 +161,8 @@ export const authPlugin: Hapi.Plugin<null> = {
         method: "GET",
         path: "/login",
         options: {
-          auth: "authPassword"
+          auth: "authPassword",
+          tags: ["api"]
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
@@ -206,7 +209,8 @@ export const authPlugin: Hapi.Plugin<null> = {
           state: {
             parse: true,
             failAction: "error"
-          }
+          },
+          tags: ["api"]
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
@@ -246,7 +250,8 @@ export const authPlugin: Hapi.Plugin<null> = {
         method: "GET",
         path: "/validate",
         options: {
-          auth: false // Would it be good to require the accessToken aswell?
+          auth: false, // Would it be good to require the accessToken aswell?
+          tags: ["api"]
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
@@ -395,8 +400,7 @@ const validateAccessToken = async (
   const { userId } = decoded;
 
   //const isValid = verifyAccessToken(decoded);
-
-  request.server.log("info", decoded);
+  // decoded cannot be null - hapi-auth-jwt2 throws an exception ealier if token malformed, expired, something else
 
   try {
     // Call to DB not necessary with JWT tokens

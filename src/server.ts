@@ -1,5 +1,10 @@
 import Hapi from "@hapi/hapi";
 
+// Swagger - related
+import HapiSwagger from "hapi-swagger";
+import Vision from "@hapi/vision";
+import Inert from "@hapi/inert";
+
 // Plugins
 import hapiAuthBasic from "@hapi/basic";
 import hapiAuthJWT from "hapi-auth-jwt2";
@@ -28,15 +33,34 @@ const server: Hapi.Server = Hapi.server({
 });
 
 export async function createServer(): Promise<Hapi.Server> {
-  // // Register the logger
-  await server.register({
-    plugin: hapiPino,
-    options: {
-      prettyPrint: process.env.NODE_ENV !== "production",
-      // Redact Authorization headers, see https://getpino.io/#/docs/redaction
-      redact: ["req.headers.authorization"]
+  // Swagger Options
+  const swaggerOptions: HapiSwagger.RegisterOptions = {
+    info: {
+      title: "Puroviva Backend API Documentation"
+    },
+    definitionPrefix: "useLabel"
+  };
+  // // Register the logger and swagger
+  await server.register([
+    {
+      plugin: Inert
+    },
+    {
+      plugin: Vision
+    },
+    {
+      plugin: HapiSwagger,
+      options: swaggerOptions
+    },
+    {
+      plugin: hapiPino,
+      options: {
+        prettyPrint: process.env.NODE_ENV !== "production",
+        // Redact Authorization headers, see https://getpino.io/#/docs/redaction
+        redact: ["req.headers.authorization"]
+      }
     }
-  });
+  ]);
 
   // Register Hapi plugins -- like middleware
   await server.register([
