@@ -162,7 +162,8 @@ export const authPlugin: Hapi.Plugin<null> = {
         path: "/login",
         options: {
           auth: "authPassword",
-          tags: ["api"]
+          tags: ["api"],
+          description: "Expects email and password in Authorization header like `Basic btoa(<EMAIL>:<PASSWORD>)`"
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
           const { prisma } = request.server.app;
