@@ -13,6 +13,7 @@ model Home {
   users       User[]
   recipes     Recipe[]
   ingredients Ingredient[]
+  posts       Post[]
   //meals     Meal[]
   isDeleted   Boolean      @default(false)
 }
@@ -24,13 +25,13 @@ model User {
   home       Home        @relation(fields: [homeId], references: [id])
   homeId     Int
   profile    Profile?
-  recipes    Recipe[]
-  posts      Post[]
   token      Token?
   emailToken EmailToken?
   isVerfied  Boolean     @default(false) // Will be switched to true, if user validates email
   isDeleted  Boolean     @default(false)
   //Meal        Meal[]
+  posts      Post[]
+  recipes    Recipe[]
 }
 
 // A user can have one profile
@@ -73,6 +74,8 @@ model Post {
   content   String   @db.VarChar(255)
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
+  home      Home     @relation(fields: [homeId], references: [id])
+  homeId    Int
 }
 
 // A meal is basically an Instance of a recipe - with time and date
