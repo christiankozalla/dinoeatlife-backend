@@ -3,51 +3,19 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log(`Start seeding ...`);
+  console.log(`Start query ...`);
 
-  const userId = 3; // From verfied access_token
-  const user = await prisma.user.findUnique({
+  const home = await prisma.home.findUnique({
     where: {
-      id: userId
+      id: 1
     }
   });
 
-  console.log(user);
+  if (home) {
+    console.log(home);
+  }
 
-  const userIds = await prisma.household.findUnique({
-    where: {
-      id: user.householdId
-    },
-    select: {
-      users: {
-        select: {
-          id: true
-        }
-      }
-    }
-  });
-
-  console.log(userIds);
-
-  // await prisma.recipe.create({
-  //   data: {
-  //     name: "New Recipe",
-  //     duration: 1000,
-  //     description: "A new recipe created by christian",
-  //     user: {
-  //       connect: {
-  //         id: user.id
-  //       }
-  //     },
-  //     household: {
-  //       connect: {
-  //         id: user.householdId
-  //       }
-  //     }
-  //   }
-  // });
-
-  console.log(`Seeding finished.`);
+  console.log(`Query finished.`);
 }
 
 main()
