@@ -1,6 +1,5 @@
 import { sign, verify } from "jsonwebtoken";
 import { User } from "@prisma/client";
-import { AuthCredentials } from "@hapi/hapi";
 
 export interface AccessTokenPayload {
   userId: User["id"];
@@ -11,14 +10,10 @@ export interface RefreshTokenPayload extends AccessTokenPayload {
   remoteAddress: string;
 }
 
-export interface ResponseOnAuth extends AccessTokenPayload {
-  accessToken: string;
-}
-
 export const createAccessToken = (userId: User["id"], homeId: User["homeId"]) => {
   return sign({ userId, homeId }, process.env.ACCESS_TOKEN_SECRET!, {
     algorithm: "HS256",
-    expiresIn: 60 * 60
+    expiresIn: "1d"
   });
 };
 
@@ -49,4 +44,8 @@ export const verifyRefreshToken = (refreshToken: string) => {
   } catch (err) {
     throw new Error(err);
   }
+};
+
+export const createAntiCsrfToken = () => {
+  return Math.random().toString(36).substring(0, 16).replace(/=/g, "x").replace(/;/g, "y");
 };

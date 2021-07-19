@@ -1,5 +1,5 @@
 import Hapi from "@hapi/hapi";
-import { Home, Profile, User, Token, PrismaClient } from "@prisma/client";
+import { Home, Profile, User, PrismaClient } from "@prisma/client";
 import Boom from "@hapi/boom";
 import { compare, hash } from "bcryptjs";
 import Joi from "joi";
@@ -9,16 +9,14 @@ import {
   createAccessToken,
   createRefreshToken,
   verifyRefreshToken,
-  AccessTokenPayload,
-  ResponseOnAuth
+  createAntiCsrfToken,
+  AccessTokenPayload
 } from "../util/tokens";
 
 declare module "@hapi/hapi" {
-  interface AuthCredentials {
+  interface AuthCredentials extends ResponseOnLogin {
     email?: User["email"];
     password?: User["password"];
-    userId: User["id"];
-    homeId: User["homeId"];
   }
   interface ServerApplicationState {
     prisma: PrismaClient;
@@ -30,6 +28,10 @@ interface RegisteringUser {
   password: User["password"];
   name: Profile["name"];
   homeName: Home["name"];
+}
+
+interface ResponseOnLogin extends AccessTokenPayload {
+  accessToken: string;
 }
 
 export const authPlugin: Hapi.Plugin<null> = {
@@ -119,7 +121,7 @@ export const authPlugin: Hapi.Plugin<null> = {
                 return Boom.badData("Email already exists");
               }
 
-              const credentials: ResponseOnAuth = {
+              const credentials: ResponseOnLogin = {
                 userId: newUser.id,
                 homeId: newUser.homeId,
                 accessToken: createAccessToken(newUser.id, newUser.homeId)
@@ -163,39 +165,23 @@ export const authPlugin: Hapi.Plugin<null> = {
         options: {
           auth: "authPassword",
           tags: ["api"],
-          description: "Expects email and password in Authorization header like `Basic btoa(<EMAIL>:<PASSWORD>)`"
+          description:
+            "Expects email and password in Authorization header like `Basic btoa(<EMAIL>:<PASSWORD>)`"
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
-          const { prisma } = request.server.app;
           const { credentials } = request.auth;
 
           try {
-            const userGotToken = await prisma.token.findUnique({
-              where: {
-                userId: credentials.userId
-              }
-            });
-
-            if (userGotToken) {
-              // credentials already include a fresh accessToken
-              return h.response(credentials).code(200);
-            } else {
+            if (credentials.accessToken) {
               const refreshToken = createRefreshToken(credentials, request.info.remoteAddress);
-
-              let storedToken = await prisma.token.create({
-                data: {
-                  userId: credentials.userId,
-                  token: refreshToken,
-                  createdAt: new Date().toISOString(),
-                  expiresAt: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString() // 7d from now
-                }
-              });
-
-              if (storedToken) {
-                return h.response(credentials).state("blim", refreshToken).code(200);
-              } else {
-                return Boom.conflict();
-              }
+              const antiCsrfToken = createAntiCsrfToken();
+              return h
+                .response(credentials)
+                .state("blim", refreshToken)
+                .state("anti-csrf", antiCsrfToken)
+                .code(200);
+            } else {
+              return Boom.notFound();
             }
           } catch (err) {
             return Boom.badImplementation(err);
@@ -214,7 +200,7 @@ export const authPlugin: Hapi.Plugin<null> = {
           tags: ["api"]
         },
         handler: async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
-          const { prisma } = request.server.app;
+          // const { prisma } = request.server.app;
           const refreshToken: string | null = request.state.blim;
 
           if (refreshToken) {
@@ -224,7 +210,7 @@ export const authPlugin: Hapi.Plugin<null> = {
             // Check if hosts are the same
             if (decoded && decoded.remoteAddress === request.info.remoteAddress) {
               // Sign a new access token
-              const credentials: ResponseOnAuth = {
+              const credentials: ResponseOnLogin = {
                 userId: decoded.userId,
                 homeId: decoded.homeId,
                 accessToken: createAccessToken(decoded.userId, decoded.homeId)
@@ -234,11 +220,11 @@ export const authPlugin: Hapi.Plugin<null> = {
             } else {
               // OR Reject the request if invalid
               // Might wanna delete token - i.e. revoke token and log the user out
-              await prisma.token.delete({
-                where: {
-                  userId: decoded.userId
-                }
-              });
+              // await prisma.token.delete({
+              //   where: {
+              //     userId: decoded.userId
+              //   }
+              // });
               return Boom.badRequest();
             }
           } else {
@@ -326,7 +312,7 @@ export const authPlugin: Hapi.Plugin<null> = {
                   request.info.remoteAddress
                 );
 
-                const credentials: ResponseOnAuth = {
+                const credentials: ResponseOnLogin = {
                   userId: registeredUser.id,
                   homeId: registeredUser.homeId,
                   accessToken: createAccessToken(registeredUser.id, registeredUser.homeId)
@@ -380,7 +366,7 @@ const validateUserPassword = async (
     }
 
     // Passed to request.auth.credentials in route handler
-    const credentials: ResponseOnAuth = {
+    const credentials: ResponseOnLogin = {
       userId: registeredUser.id,
       homeId: registeredUser.homeId,
       accessToken: createAccessToken(registeredUser.id, registeredUser.homeId)

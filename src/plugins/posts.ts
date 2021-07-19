@@ -93,6 +93,7 @@ export const postsPlugin: Hapi.Plugin<null> = {
             await prisma.post.create({
               data: {
                 userId: credentials.userId,
+                homeId: credentials.homeId,
                 content
               }
             });

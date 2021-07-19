@@ -1,5 +1,5 @@
 import Hapi from "@hapi/hapi";
-import { Ingredient, Recipe, User, PrismaClient } from "@prisma/client";
+import { Ingredient, Recipe, User, Post, Home, PrismaClient } from "@prisma/client";
 import Boom from "@hapi/boom";
 import Joi from "joi";
 
@@ -14,6 +14,12 @@ declare module "@hapi/hapi" {
     userId: User["id"];
     homeId: User["homeId"];
   }
+}
+
+interface HomeResponse extends Home {
+  posts: Post[];
+  recipes: Recipe[];
+  ingredients: Ingredient[];
 }
 
 interface IngredientInput {
@@ -45,11 +51,28 @@ export const homePlugin: Hapi.Plugin<null> = {
           const { credentials } = request.auth;
 
           try {
+            const home: Home | null = await prisma.home.findUnique({
+              where: {
+                id: credentials.homeId
+              }
+            });
+
+            if (!home) {
+              return Boom.badData();
+            }
+
             // Fetch all recipes
             const recipes: Recipe[] = await prisma.recipe.findMany({
               where: {
                 homeId: credentials.homeId,
                 isDeleted: false
+              }
+            });
+
+            // Fetch posts by all users of the home
+            const posts: Post[] = await prisma.post.findMany({
+              where: {
+                homeId: credentials.homeId
               }
             });
 
@@ -61,7 +84,9 @@ export const homePlugin: Hapi.Plugin<null> = {
               }
             });
 
-            return h.response({ recipes, ingredients }).code(200);
+            const homeResponse: HomeResponse = { ...home, recipes, ingredients, posts };
+
+            return h.response(homeResponse).code(200);
           } catch (err) {
             return Boom.badImplementation(err);
           }
@@ -279,12 +304,14 @@ export const homePlugin: Hapi.Plugin<null> = {
   }
 };
 
-const validateIngredientInput = Joi.array().items(
-  Joi.object({
-    name: Joi.string().required(),
-    unit: Joi.string().required()
-  }).label("ingredient")
-).label("ingredientArray");
+const validateIngredientInput = Joi.array()
+  .items(
+    Joi.object({
+      name: Joi.string().required(),
+      unit: Joi.string().required()
+    }).label("ingredient")
+  )
+  .label("ingredientArray");
 
 const validateRecipeInput = Joi.object({
   name: Joi.string().max(255).required(),

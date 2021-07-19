@@ -32,7 +32,8 @@ const server: Hapi.Server = Hapi.server({
   debug: false,
   routes: {
     cors: {
-      origin: ["Access-Control-Allow-Origin", "http://localhost:8100"]
+      origin: ["Access-Control-Allow-Origin", "http://localhost:8100"],
+      credentials: true // needed for refreshToken cookie and anti-csrf cookie
     }
   }
 });
@@ -78,9 +79,18 @@ export async function createServer(): Promise<Hapi.Server> {
     postsPlugin
   ]);
 
+  server.state("anti-csrf", {
+    ttl: 604800000, // 7d
+    isSecure: process.env.NODE_ENV === "production" ? true : false,
+    isHttpOnly: false,
+    encoding: "none",
+    clearInvalid: true,
+    strictHeader: true
+  });
+
   server.state("blim", {
     ttl: 604800000, // 7d
-    isSecure: true,
+    isSecure: process.env.NODE_ENV === "production" ? true : false,
     isHttpOnly: true,
     encoding: "none",
     clearInvalid: true,
