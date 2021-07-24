@@ -51,9 +51,14 @@ export const homePlugin: Hapi.Plugin<null> = {
           const { credentials } = request.auth;
 
           try {
-            const home: Home | null = await prisma.home.findUnique({
+            const home: HomeResponse | null = await prisma.home.findUnique({
               where: {
                 id: credentials.homeId
+              },
+              include: {
+                posts: true,
+                ingredients: true,
+                recipes: true
               }
             });
 
@@ -61,32 +66,7 @@ export const homePlugin: Hapi.Plugin<null> = {
               return Boom.badData();
             }
 
-            // Fetch all recipes
-            const recipes: Recipe[] = await prisma.recipe.findMany({
-              where: {
-                homeId: credentials.homeId,
-                isDeleted: false
-              }
-            });
-
-            // Fetch posts by all users of the home
-            const posts: Post[] = await prisma.post.findMany({
-              where: {
-                homeId: credentials.homeId
-              }
-            });
-
-            // Fetch all ingredients
-            const ingredients: Ingredient[] = await prisma.ingredient.findMany({
-              where: {
-                homeId: credentials.homeId,
-                isDeleted: false
-              }
-            });
-
-            const homeResponse: HomeResponse = { ...home, recipes, ingredients, posts };
-
-            return h.response(homeResponse).code(200);
+            return h.response(home).code(200);
           } catch (err) {
             return Boom.badImplementation(err);
           }

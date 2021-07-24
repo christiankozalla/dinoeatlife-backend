@@ -6,7 +6,7 @@
 The backend of Dino Eat Life is a Node.js API built with
 
 - [Hapi.js](https://hapi.dev/)
-- [PostgreSQL](https://postgresql.org/) running in [Docker](htts://docker.com/)
+- [PostgreSQL](https://postgresql.org/) running as a [Docker](htts://docker.com/) container
 - [Primsa](https://prisma.io/)
 - [Hapi-Auth-JWT2](https://github.com/dwyl/hapi-auth-jwt2)
 
