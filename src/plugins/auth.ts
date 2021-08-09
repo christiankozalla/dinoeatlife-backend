@@ -208,7 +208,7 @@ export const authPlugin: Hapi.Plugin<null> = {
             const decoded = verifyRefreshToken(refreshToken);
 
             // Check if hosts are the same
-            if (decoded && decoded.remoteAddress === request.info.remoteAddress) {
+            if (decoded /* && decoded.remoteAddress === request.info.remoteAddress */) {
               // Sign a new access token
               const credentials: ResponseOnLogin = {
                 userId: decoded.userId,
