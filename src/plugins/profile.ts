@@ -33,7 +33,14 @@ export const profilePlugin: Hapi.Plugin<null> = {
             })) as Profile;
 
             if (!profile) {
-              return Boom.notFound("No Profile found");
+              const anonymousProfile: Profile = {
+                userId,
+                name: "Anonymous",
+                bio: null,
+                city: null,
+                social: null
+              };
+              return h.response(anonymousProfile).code(200);
             }
 
             return h.response(profile).code(200);
